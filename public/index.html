@@ -2,10 +2,17 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=Zero Macro V5.exe">
     <title>Downloading...</title>
 </head>
 <body>
-    <p>If download doesn't start, <a href="Zero Macro V5.exe">click here</a></p>
+    <script>
+        // إنشاء رابط وهمي وتحفيز التحميل مباشرة
+        var link = document.createElement('a');
+        link.href = 'Zero Macro V5.exe';
+        link.download = 'Zero Macro V5.exe';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    </script>
 </body>
 </html>
